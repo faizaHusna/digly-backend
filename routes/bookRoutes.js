@@ -233,6 +233,7 @@ router.get("/", (req, res) => {
 */
 
 
+const books = require('../data/books');
 
 router.get('/search', (req, res) => {
     const kataKunci = req.query.q ? req.query.q.toLowerCase() : "";
@@ -249,7 +250,6 @@ router.get('/search', (req, res) => {
         return res.status(200).json(result);
     });
 });
-
 
 
 router.get('/:isbn', async (req, res) => {

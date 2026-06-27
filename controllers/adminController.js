@@ -1,6 +1,5 @@
 const db = require("../config/mysql");
 
-// 📊 1. AMBIL STATISTIK AGREGAT UNTUK DASHBOARD ADMIN
 exports.getDashboardStats = async (req, res) => {
     try {
         const countBooksQuery = "SELECT COUNT(*) AS total_books FROM books";
@@ -8,7 +7,6 @@ exports.getDashboardStats = async (req, res) => {
         const countUsersQuery = "SELECT COUNT(*) AS total_users FROM users WHERE role = 'member'";
         const countLoansQuery = "SELECT COUNT(*) AS active_loans FROM borrowings WHERE status = 'borrowed'";
 
-        // Rantai Callback Query MySQL
         db.query(countBooksQuery, (err, booksResult) => {
             if (err) return res.status(500).json({ message: "Gagal menghitung buku", error: err.message });
 
@@ -21,22 +19,20 @@ exports.getDashboardStats = async (req, res) => {
                     db.query(countLoansQuery, (err, loansResult) => {
                         if (err) return res.status(500).json({ message: "Gagal menghitung peminjaman", error: err.message });
 
-                        // Set Header anti-cache
                         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
                         res.setHeader('Pragma', 'no-cache');
                         res.setHeader('Expires', '0');
 
-                        // Kirim Data Sukses (200)
                         return res.status(200).json({
                             totalBooks: booksResult[0].total_books,
                             totalStock: stockResult[0].total_stock || 0,
                             totalUsers: usersResult[0].total_users,
                             activeLoans: loansResult[0].active_loans
                         });
-                    }); // Akhir loans query
-                }); // Akhir users query
-            }); // Akhir stock query
-        }); // Akhir books query
+                    }); 
+                }); 
+            }); 
+        }); 
 
     } catch (error) {
         console.error("Error pada sistem statistik dashboard:", error);
@@ -44,7 +40,6 @@ exports.getDashboardStats = async (req, res) => {
     }
 };
 
-// ➕ 2. TAMBAH BUKU BARU (POST)
 exports.addBook = (req, res) => {
     const { isbn, title, author, category, stock, cover_image } = req.body;
 
@@ -67,7 +62,6 @@ exports.addBook = (req, res) => {
     });
 };
 
-// 📝 3. EDIT DATA BUKU (PUT)
 exports.updateBook = (req, res) => {
     const { id } = req.params; 
     const { isbn, title, author, category, stock, cover_image } = req.body;
@@ -91,7 +85,6 @@ exports.updateBook = (req, res) => {
     });
 };
 
-// 🗑️ 4. HAPUS BUKU (DELETE)
 exports.deleteBook = (req, res) => {
     const { id } = req.params;
 
@@ -110,7 +103,6 @@ exports.deleteBook = (req, res) => {
 };
 
 exports.getAllUsers = (req, res) => {
-    // Mengambil data user yang bukan admin agar admin tidak bisa memblokir sesama admin secara tidak sengaja
     const queryStr = "SELECT id, name, email, role, status, created_at FROM users WHERE role = 'member' ORDER BY created_at DESC";
 
     db.query(queryStr, (err, results) => {
@@ -122,12 +114,10 @@ exports.getAllUsers = (req, res) => {
     });
 };
 
-// 🚫 2. MODERASI STATUS USER (PUT - Block / Unblock)
 exports.toggleUserStatus = (req, res) => {
     const { id } = req.params;
-    const { currentStatus } = req.body; // Ambil status saat ini dari frontend
+    const { currentStatus } = req.body; 
 
-    // Balikkan statusnya: jika 'active' ubah ke 'blocked', begitu sebaliknya
     const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
 
     const queryStr = "UPDATE users SET status = ? WHERE id = ?";
@@ -144,7 +134,6 @@ exports.toggleUserStatus = (req, res) => {
     });
 };
 
-// 🗑️ 3. HAPUS AKUN USER (DELETE)
 exports.deleteUser = (req, res) => {
     const { id } = req.params;
     const queryStr = "DELETE FROM users WHERE id = ? AND role = 'member'";
@@ -161,9 +150,7 @@ exports.deleteUser = (req, res) => {
     });
 };
 
-// 📋 1. AMBIL SEMUA RIWAYAT PEMINJAMAN AKTIF & SELESAI (GET)
 exports.getAllLoans = (req, res) => {
-    // Menggunakan JOIN agar kita bisa mendapatkan nama user dan judul buku secara gamblang
     const queryStr = `
         SELECT 
             b.id AS loan_id,
@@ -188,12 +175,10 @@ exports.getAllLoans = (req, res) => {
     });
 };
 
-// 🔄 2. PROSES PENGEMBALIAN BUKU (PUT)
 exports.returnBook = (req, res) => {
-    const { id } = req.params; // Ini adalah loan_id (ID Transaksi)
-    const { bookId } = req.body; // Kita butuh bookId untuk mengembalikan stoknya ke tabel books
+    const { id } = req.params; 
+    const { bookId } = req.body; 
 
-    // Langkah A: Ubah status peminjaman menjadi 'returned'
     const updateLoanQuery = "UPDATE borrowings SET status = 'returned', return_date = NOW() WHERE id = ?";
 
     db.query(updateLoanQuery, [id], (err, result) => {
@@ -206,7 +191,6 @@ exports.returnBook = (req, res) => {
             return res.status(404).json({ message: "Data peminjaman tidak ditemukan." });
         }
 
-        // Langkah B: Otomatis tambahkan stok buku kembali sebanyak +1 di MySQL
         const updateStockQuery = "UPDATE books SET stock = stock + 1 WHERE id = ?";
         
         db.query(updateStockQuery, [bookId], (err, stockResult) => {
