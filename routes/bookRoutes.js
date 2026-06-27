@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const db = require("../config/mysql");
+const path = require('path');
 
-const books = require('../data/books');
+const books = require(path.join(__dirname, '../data/books'));
 
 const LIST_ISBN = [
     // Tech & Programming
