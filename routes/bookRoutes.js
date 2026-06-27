@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const db = require("../config/mysql");
 
-const DATABASE_BUKU_LOKAL = require('../../frontend/src/data/books').default;
+const books = require('../data/books');
 
 const LIST_ISBN = [
     // Tech & Programming
@@ -233,7 +233,6 @@ router.get("/", (req, res) => {
 */
 
 
-const books = require('../data/books');
 
 router.get('/search', (req, res) => {
     const kataKunci = req.query.q ? req.query.q.toLowerCase() : "";
