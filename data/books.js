@@ -48,4 +48,4 @@ const DATABASE_BUKU_LOKAL = [
    
 ];
 
-export default DATABASE_BUKU_LOKAL;
+module.exports = DATABASE_BUKU_LOKAL;
